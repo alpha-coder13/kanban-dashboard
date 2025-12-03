@@ -15,6 +15,7 @@ export const Columns  = ({id, color,title,count, children,draggedRef,dragDropTas
         if(columnRef.current){
           const data = JSON.parse(e.dataTransfer?.getData('text') || '');
           if(data){
+            console.log(data);
             dragDropTasks(data.taskDetails, id, data.colOld)
           }
           // console.log(data);

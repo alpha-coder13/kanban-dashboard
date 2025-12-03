@@ -10,9 +10,6 @@ export const TaskBanner = ({id, title, tags, dueDate, priority,assignee,descript
           const taskData = JSON.stringify({taskDetails:{id,title,tags,dueDate,priority,assignee,description}, colOld:columnId})
           e.dataTransfer?.setData('text/plain',taskData)
         })
-        taskRef.current.addEventListener('dragend',(e)=>{
-          taskRef.current?.remove();
-        })
       }
     },[taskRef,draggedRef])
     return(
