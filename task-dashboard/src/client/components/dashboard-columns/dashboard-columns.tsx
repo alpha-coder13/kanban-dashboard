@@ -1,11 +1,30 @@
 'use client'
 import { Calendar, MoreVertical, Plus } from "lucide-react";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import ColumnParameters from "./interface";
 
-export const Columns  = ({id, color,title,count, children} : ColumnParameters) =>{
+export const Columns  = ({id, color,title,count, children,draggedRef,dragDropTasks} : ColumnParameters) =>{
+  const columnContainerRef = useRef<HTMLDivElement>(null);
+  const columnRef = useRef<HTMLDivElement>(null);
+  useEffect(()=>{
+    if(columnContainerRef.current){
+      columnContainerRef.current.addEventListener('dragover',(e)=>{
+        e.preventDefault();
+      })
+      columnContainerRef.current.addEventListener('drop',(e)=>{
+        if(columnRef.current){
+          const data = JSON.parse(e.dataTransfer?.getData('text') || '');
+          if(data){
+            dragDropTasks(data.taskDetails, id, data.colOld)
+          }
+          // console.log(data);
+
+        }
+      })
+    }
+  },[columnContainerRef,draggedRef,columnRef])
     return (
-         <div className="flex flex-col">
+         <div className="flex flex-col" ref={columnContainerRef}>
               <div className={`bg-gradient-to-br ${color} rounded-t-xl border border-gray-800 border-b-0 p-4`}>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
@@ -14,14 +33,11 @@ export const Columns  = ({id, color,title,count, children} : ColumnParameters) =
                       {count}
                     </span>
                   </div>
-                  <button className="text-gray-300 hover:text-white transition-colors">
-                    <Plus className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
 
               <div className="bg-gray-950/50 border border-gray-800 border-t-0 rounded-b-xl p-3 flex-1">
-                <div className="space-y-3">
+                <div className="space-y-3" id={`${title}-${id}`} ref={columnRef}>
                   {children}
                 </div>
               </div>

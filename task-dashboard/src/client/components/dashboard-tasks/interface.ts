@@ -6,6 +6,8 @@ export interface TaskBannerInterface {
     priority:Priority,
     assignee:String,
     title:String
+    draggedRef:React.Ref<EventTarget>,
+    columnId:number
 }
 
 enum Priority{

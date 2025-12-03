@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {  Filter, Search } from "lucide-react";
 import { Columns } from "./components/dashboard-columns/dashboard-columns";
 import ColumnParameters from "./components/dashboard-columns/interface";
@@ -7,14 +7,33 @@ import { TaskBannerInterface } from "./components/dashboard-tasks/interface";
 import { TaskBanner } from "./components/dashboard-tasks/dashboard-tasks";
 
 export default function Homepage(){
+  const draggedRef = useRef<EventTarget>(null);
+  const dragDropTasks = (taskData:TaskBannerInterface,columnIdNew:number,columnIdOld:number) =>{
+    setTasks(prevState =>{
+      const newState = {...prevState};
+      newState[columnIdOld] = newState[columnIdOld].reduce((prev,curr)=>{
+        if(curr.id!== taskData.id){
+          prev.push(curr);
+        }
+       return prev;
+      },[]);
+      if(newState[columnIdNew].indexOf((val)=>{console.log(val); return parseInt(val.id) === parseInt(taskData.id)}) == -1 )
+       {
+         newState[columnIdNew].push(taskData);
+       }
+       
+       console.log(newState);
+      return newState
+    })
+  }
 
-    const [columns, setColumns]  = useState([
+  const [columns, setColumns]  = useState([
     { id: 1, title: 'Backlog', count: 12, color: 'from-gray-700 to-gray-800' },
     { id: 2, title: 'In Progress', count: 5, color: 'from-slate-700 to-slate-800' },
     { id: 3, title: 'Review', count: 3, color: 'from-zinc-700 to-zinc-800' },
     { id: 4, title: 'Completed', count: 8, color: 'from-neutral-700 to-neutral-800' },
   ]);
-    const [tasks,setTaskts] = useState({
+  const [tasks,setTasks] = useState({
     1: [
       { id: 1, title: 'Redesign landing page', description: 'Create new hero section with better CTAs', priority: 'high', assignee: 'JD', tags: ['Design', 'UI'], dueDate: 'Mar 15' },
       { id: 2, title: 'Implement authentication', description: 'Add OAuth providers and email login', priority: 'medium', assignee: 'SK', tags: ['Backend', 'Security'], dueDate: 'Mar 18' },
@@ -32,6 +51,11 @@ export default function Homepage(){
       { id: 8, title: 'Email notifications', description: 'Set up transactional email system', priority: 'low', assignee: 'JD', tags: ['Backend'], dueDate: 'Mar 05' },
     ],
   });
+
+  
+  useEffect(()=>{
+    console.log(tasks)
+  },[tasks])
     return (
     <div className="min-h-screen bg-black text-white">
       <div className="border-b border-gray-800 bg-gradient-to-b from-black to-gray-950">
@@ -69,13 +93,16 @@ export default function Homepage(){
 
       <div className="max-w-[2000px] mx-auto px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {columns.map((column :ColumnParameters) => (
-           <Columns id = {parseInt(column.id)} key={column.id} title={column.title} color={column.color} count={(column.count).toString()} >
-            {tasks[column.id as keyof typeof tasks]?.map(({id,tags,description,dueDate,priority,assignee,title}:TaskBannerInterface)=>(
-                <TaskBanner id={id} key={id} tags={tags} description={description} dueDate={dueDate} priority={priority} assignee={assignee} title={title}/>
+          {columns.map((column :ColumnParameters) => {
+           return (
+           <Columns id = {parseInt(column.id)} key={column.id} title={column.title} color={column.color} count={(column.count).toString()}  draggedRef={draggedRef} dragDropTasks={dragDropTasks}>
+            {tasks[parseInt(column.id)]?.map(({id,tags,description,dueDate,priority,assignee,title}:TaskBannerInterface)=>(
+                <TaskBanner columnId={column.id} id={id} key={id} tags={tags} description={description} dueDate={dueDate} priority={priority} assignee={assignee} title={title} draggedRef={draggedRef}/>
             ))}
            </Columns>
-          ))}
+          )
+        }
+          )}
         </div>
       </div>
     </div>
