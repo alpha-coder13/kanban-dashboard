@@ -1,9 +1,13 @@
 import { X, Pen, Mic } from 'lucide-react';
 import { useState } from 'react';
 import { AddTaskModalProps } from './interface';
+import { useDashBoardContext } from '@/client/Store/container';
 
 
-export function AddTaskModal({ }: AddTaskModalProps) {
+export function AddTask({onClose}:AddTaskModalProps) {
+
+
+  
   const [textInput, setTextInput] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -13,10 +17,8 @@ export function AddTaskModal({ }: AddTaskModalProps) {
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <>
       <div className="bg-gradient-to-b from-gray-950 to-black border border-gray-800 rounded-2xl w-full max-h-[85vh] flex flex-col shadow-2xl shadow-black/50">
         <div className="flex justify-end p-6">
           <button
@@ -87,6 +89,6 @@ export function AddTaskModal({ }: AddTaskModalProps) {
           </div>
         </form>
       </div>
-    </div>
+    </>
   );
 }

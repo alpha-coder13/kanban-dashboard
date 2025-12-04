@@ -1,6 +1,6 @@
-import { modalState } from "./store";
+import { modalStore } from "./store";
 
-export const modalReducer = (state = modalState, action) =>{
+export const modalReducer = (state = modalStore, action) =>{
     switch(action.type){
         case "toggle":{
             return {

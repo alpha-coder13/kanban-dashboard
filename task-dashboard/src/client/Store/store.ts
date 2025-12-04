@@ -1,7 +1,7 @@
-const modalState = {
+const modalStore = {
     isOpen : false,
 }
 
 export {
-    modalState
+    modalStore
 }
