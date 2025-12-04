@@ -1,8 +1,8 @@
 import { Calendar, MoreVertical } from "lucide-react";
 import React, { useEffect, useRef } from "react";
-import { TaskBannerInterface } from "./interface";
+import { TaskInterface } from "./interface";
 
-export const TaskBanner = ({id, title, tags, dueDate, priority,assignee,description,draggedRef,columnId}:TaskBannerInterface)=>{
+export const TaskBanner = ({id, title, tags, dueDate, priority,assignee,description,draggedRef,columnId}:TaskInterface)=>{
     const taskRef = useRef<HTMLDivElement>(null);
     useEffect(()=>{
       if(taskRef.current){

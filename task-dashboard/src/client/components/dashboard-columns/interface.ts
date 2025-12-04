@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { TaskBannerInterface } from "../dashboard-tasks/interface";
+import { TaskInterface } from "../dashboard-tasks/interface";
 
 export default interface ColumnParameters{
     id: any,
