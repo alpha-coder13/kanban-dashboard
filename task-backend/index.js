@@ -1,6 +1,7 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import { LLMRequests } from './llmParsing.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -8,7 +9,7 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
-const statuses = ["TO DO", "IN PROGRESS", "REJECTED", "COMPLETED"];
+const statuses = ["TODO", "INPROGRESS", "REJECTED", "COMPLETED"];
 const priorities = ["Low", "Medium", "High"];
 
 let tasks = Array.from({ length: 10 }, (_, i) => ({
@@ -34,13 +35,31 @@ app.post('/tasks', (req, res) => {
         id: String(currentId++),
         title,
         description,
-        status: status || 'TO DO',
+        status: status || 'TODO',
         priority,
         dueDate,
         createdAt: new Date()
     };
     tasks.push(newTask);
     res.status(201).json(newTask);
+});
+
+app.post('/tasksPrompt', async (req, res) => {
+    const { input } = req.body;
+    try{
+        let response = await LLMRequests(input);
+        const newTask = {
+            title:response.title ||'',
+            description:response.description ||'',
+            status: response.status || 'TODO' ,
+            priority : response.priority || 'low',
+            dueDate:response.dueDate || '',
+        };
+        res.status(201).json(newTask);
+    }catch(err){
+        res.status(424).json({});
+    }
+
 });
 
 app.get('/tasks', (req, res) => {
