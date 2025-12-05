@@ -6,3 +6,12 @@ export interface AddTaskModalProps {
   addTask: (task: TaskInterface | String) => void;
 }
 
+export interface AddTaskFormInterface {
+  title: string;
+  description: string;
+  priority: string;
+  tags: string[];
+  dueDate: string;
+  assignee: string;
+  status: string;
+}

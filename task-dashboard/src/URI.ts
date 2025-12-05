@@ -3,10 +3,10 @@ export const ENDPOINTS = {
     "GET": {
         "getTasks": () => "/tasks",
         "getTaskById": (id: String) => `/tasks/${id}`,
-        "getTasksByStatus": (status: String) => `/tasks?status=${status}`,
-        "getTasksByPriority": (priority: String) => `/tasks?priority=${priority}`,
-        "getTasksByDueDate": (dueDate: String) => `/tasks?dueDate=${dueDate}`,
-        "getTasksBySearch": (search: String) => `/tasks?search=${search}`,
+        "getTasksByStatus": (status: String) => `/tasks/?status=${status}`,
+        "getTasksByPriority": (priority: String) => `/tasks/?priority=${priority}`,
+        "getTasksByDueDate": (dueDate: String) => `/tasks/?dueDate=${dueDate}`,
+        "getTasksBySearch": (search: String) => `/tasks/?search=${search}`,
     },
     "POST": {
         "postTask": () => "/tasks",

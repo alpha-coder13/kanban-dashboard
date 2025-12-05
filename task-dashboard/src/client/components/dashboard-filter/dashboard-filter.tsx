@@ -6,11 +6,37 @@ interface FilterModalProps {
   onClose: () => void;
 }
 
-export function TaskFilter({onClose}: FilterModalProps) {
+export function TaskFilter({ onClose }: FilterModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPriority, setSelectedPriority] = useState<string | null>(null);
+  const [filters, setFilters] = useState({
+    title: '',
+    description: '',
+    priority: '',
+    // tags: [],
+    dueDate: '',
+    assignee: '',
+    status: '',
+  })
 
   const filteredTasks = [];
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [key]: value,
+    }));
+  };
+  const handleReset = () => {
+    setFilters({
+      title: '',
+      description: '',
+      priority: '',
+      // tags: [],
+      dueDate: '',
+      assignee: '',
+      status: '',
+    });
+  };
   return (
     <>
       <div className="bg-gradient-to-b from-gray-950 to-black border border-gray-800 rounded-2xl w-full max-h-[85vh] flex flex-col shadow-2xl shadow-black/50">
@@ -23,40 +49,83 @@ export function TaskFilter({onClose}: FilterModalProps) {
           </button>
         </div>
 
-        <div className="px-6 pt-6 pb-4 border-b border-gray-800/50">
-          <div className="relative mb-4">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search by title, description, or tags..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-800 rounded-lg focus:outline-none focus:border-gray-600 transition-colors text-white placeholder-gray-600"
-            />
-          </div>
+        <div className="px-6 pt-6 pb-6 border-b border-gray-800/50">
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="text-xs font-medium text-gray-400 mb-2 block">Title</label>
+              <input
+                type="text"
+                value={filters.title}
+                onChange={(e) => handleFilterChange('title', e.target.value)}
+                placeholder="Search title..."
+                className="w-full px-3 py-2 bg-gray-900/50 border border-gray-800 rounded-lg focus:outline-none focus:border-gray-600 transition-colors text-sm text-white placeholder-gray-600"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-400 mb-2 block">Description</label>
+              <input
+                type="text"
+                value={filters.description}
+                onChange={(e) => handleFilterChange('description', e.target.value)}
+                placeholder="Search description..."
+                className="w-full px-3 py-2 bg-gray-900/50 border border-gray-800 rounded-lg focus:outline-none focus:border-gray-600 transition-colors text-sm text-white placeholder-gray-600"
+              />
+            </div>
 
-          <div>
-            <label className="text-xs font-medium text-gray-400 mb-2 block">Priority</label>
-            <div className="flex gap-2">
-              {['low', 'medium', 'high'].map((priority) => (
-                <button
-                  key={priority}
-                  onClick={() => setSelectedPriority(selectedPriority === priority ? null : priority)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all capitalize ${
-                    selectedPriority === priority
-                      ? priority === 'high'
-                        ? 'bg-red-500/20 text-red-300 border border-red-500/50'
-                        : priority === 'medium'
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50'
-                        : 'bg-blue-500/20 text-blue-300 border border-blue-500/50'
-                      : 'bg-gray-800/30 text-gray-400 border border-gray-700/50 hover:bg-gray-800/50'
-                  }`}
-                >
-                  {priority}
-                </button>
-              ))}
+            <div>
+              <label className="text-xs font-medium text-gray-400 mb-2 block">Priority</label>
+              <select
+                value={filters.priority}
+                onChange={(e) => handleFilterChange('priority', e.target.value)}
+                className="w-full px-3 py-2 bg-gray-900/50 border border-gray-800 rounded-lg focus:outline-none focus:border-gray-600 transition-colors text-sm text-white"
+              >
+                <option value="">All Priorities</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-400 mb-2 block">Assignee</label>
+              <input
+                type="text"
+                value={filters.assignee}
+                onChange={(e) => handleFilterChange('assignee', e.target.value)}
+                placeholder="Assignee initials..."
+                className="w-full px-3 py-2 bg-gray-900/50 border border-gray-800 rounded-lg focus:outline-none focus:border-gray-600 transition-colors text-sm text-white placeholder-gray-600"
+              />
+            </div>
+
+            {/* <div>
+              <label className="text-xs font-medium text-gray-400 mb-2 block">Tags</label>
+              <input
+                type="text"
+                value={filters.tags}
+                onChange={(e) => handleFilterChange('tags', e.target.value)}
+                placeholder="Search tags..."
+                className="w-full px-3 py-2 bg-gray-900/50 border border-gray-800 rounded-lg focus:outline-none focus:border-gray-600 transition-colors text-sm text-white placeholder-gray-600"
+              />
+            </div> */}
+
+            <div>
+              <label className="text-xs font-medium text-gray-400 mb-2 block">Due Date</label>
+              <input
+                type="text"
+                value={filters.dueDate}
+                onChange={(e) => handleFilterChange('dueDate', e.target.value)}
+                placeholder="Date format..."
+                className="w-full px-3 py-2 bg-gray-900/50 border border-gray-800 rounded-lg focus:outline-none focus:border-gray-600 transition-colors text-sm text-white placeholder-gray-600"
+              />
             </div>
           </div>
+
+          <button
+            onClick={handleReset}
+            className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700/50 text-gray-400 rounded-lg hover:bg-gray-800/50 transition-colors text-sm font-medium"
+          >
+            Reset Filters
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -85,13 +154,12 @@ export function TaskFilter({onClose}: FilterModalProps) {
                   <h3 className="font-medium text-gray-100 text-sm leading-tight flex-1">
                     {task.title}
                   </h3>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ml-2 ${
-                    task.priority === 'high'
-                      ? 'bg-red-500/15 text-red-400'
-                      : task.priority === 'medium'
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ml-2 ${task.priority === 'high'
+                    ? 'bg-red-500/15 text-red-400'
+                    : task.priority === 'medium'
                       ? 'bg-amber-500/15 text-amber-400'
                       : 'bg-blue-500/15 text-blue-400'
-                  }`}>
+                    }`}>
                     {task.priority}
                   </span>
                 </div>

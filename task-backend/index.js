@@ -2,6 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { LLMRequests } from './llmParsing.js';
+import { request } from 'http';
+import dotenv from 'dotenv';
+import path from 'path';
+dotenv.config({path:path.join(import.meta.dirname,'.env')});
+import http from 'http';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -9,39 +14,67 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
-const statuses = ["TODO", "INPROGRESS", "REJECTED", "COMPLETED"];
+const statuses = ["TO DO", "IN PROGRESS", "REJECTED", "COMPLETED"];
 const priorities = ["Low", "Medium", "High"];
+const inMemoryTaskID = new Map();
 
-let tasks = Array.from({ length: 10 }, (_, i) => ({
-    id: String(i + 1),
-    title: `Task ${i + 1}`,
-    description: `Description for task ${i + 1}`,
-    status: Math.floor(Math.random() * statuses.length) + 1,
-    priority: priorities[Math.floor(Math.random() * priorities.length)],
-    dueDate: new Date(Date.now() + Math.random() * 10000000000).toISOString().split('T')[0],
-    tags: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    assignee: `${String.fromCharCode(Math.floor(Math.random() * 26) + 65)}${String.fromCharCode(Math.floor(Math.random() * 26) + 65)}`,
-}));
-
+// let tasks = Array.from({ length: 10 }, (_, i) => ({
+//     id: String(i + 1),
+//     title: `Task ${i + 1}`,
+//     description: `Description for task ${i + 1}`,
+//     status: Math.floor(Math.random() * statuses.length) + 1,
+//     priority: priorities[Math.floor(Math.random() * priorities.length)],
+//     dueDate: new Date(Date.now() + Math.random() * 10000000000).toISOString().split('T')[0],
+//     tags: [],
+//     assignee: `${String.fromCharCode(Math.floor(Math.random() * 26) + 65)}${String.fromCharCode(Math.floor(Math.random() * 26) + 65)}`,
+// }));
 
 
-let currentId = 11;
-
-app.post('/tasks', (req, res) => {
-    const { title, description, status, priority, dueDate } = req.body;
+app.post('/task', (req, res) => {
+    const { title, description, status, priority, dueDate,assignee ,tags} = req.body;
     const newTask = {
-        id: String(currentId++),
-        title,
-        description,
-        status: status || 'TODO',
-        priority,
-        dueDate,
-        createdAt: new Date()
+        title:title || '',
+        description:description || '',
+        status: status || 'TO DO',
+        priority:priority || 'Low',
+        dueDate : dueDate || new Date(Date.now()).toISOString(),
+        assignee:assignee || '',
+        tags:tags || [],
     };
-    tasks.push(newTask);
-    res.status(201).json(newTask);
+    const requestJSONstring  =JSON.stringify(newTask);
+    console.log(requestJSONstring);
+    let postRequest = http.request({
+        hostname: `${process.env.DATABASE_SERVER_ENDPOINT}`,
+        port: process.env.DATABASE_SERVER_PORT,
+        path: '/task',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': requestJSONstring.length
+        },
+    },(response)=>{
+        let task = '';
+        response.on('data', (chunk) => {
+            task += chunk;
+        });
+        response.on('end', () => {
+            try{
+                let temptask = JSON.parse(task);
+                console.log(temptask);
+                res.status(201).json(temptask);
+            }catch(err){
+                console.log(err);
+                res.status(500).send(task);
+            }
+        });
+    })
+   postRequest.on('error', (error) => {
+        console.error(error);
+        console.log(error.stack);
+        res.status(500).send({status:'error',message:error.message});
+    })
+    postRequest.write(requestJSONstring)
+    postRequest.end();
 });
 
 app.post('/tasksPrompt', async (req, res) => {
@@ -62,70 +95,157 @@ app.post('/tasksPrompt', async (req, res) => {
 
 });
 
-app.get('/tasks', (req, res) => {
-
-    let { status, priority, dueDate, search, assignee } = req.query;
-    let filteredTasks = tasks;
-
-    if (status) {
-        filteredTasks = filteredTasks.filter(t => t.status === status);
-    }
-    if (priority) {
-        filteredTasks = filteredTasks.filter(t => t.priority === priority);
-    }
-    if (dueDate) {
-        filteredTasks = filteredTasks.filter(t => t.dueDate === dueDate);
-    }
-    if (assignee) {
-        filteredTasks = filteredTasks.filter(t => t.assignee.toLowerCase() === assignee.toLowerCase());
-    }
-    if (search) {
-        const query = search.toLowerCase();
-        filteredTasks = filteredTasks.filter(t =>
-            (t.title && t.title.toLowerCase().includes(query)) ||
-            (t.description && t.description.toLowerCase().includes(query))
-        );
-    }
-    res.json(filteredTasks);
-});
-
+app.get('/tasks',(req,res)=>{
+    let getRequest = request({
+        hostname: `${process.env.DATABASE_SERVER_ENDPOINT}`,
+        port: process.env.DATABASE_SERVER_PORT,
+        path: '/tasks',
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+    getRequest.on('response', (response) => {
+        let tasks = '';
+        response.on('data', (chunk) => {
+            tasks += chunk;
+        });
+        response.on('end', () => {
+            try{
+                let temptask = JSON.parse(tasks);
+                res.json(temptask);
+            }catch(err){
+                console.log(err);
+                res.status(500).send(tasks);
+            }
+        });
+    });
+    getRequest.on('error', (error) => {
+        console.error(error);
+        res.status(500).send({status:'error',message:error.message});
+    });
+    getRequest.end();
+})
 app.get('/tasks/:id', (req, res) => {
-    const task = tasks.find(t => t.id === req.params.id);
-    if (task) {
-        res.json(task);
-    } else {
-        res.status(404).send();
-    }
+    let id = req.params.id;
+    let { status, priority, dueDate, searchString, assignee } = req.query;
+    let queryParameters = new URLSearchParams({id,status,priority,dueDate,assignee});
+    let getRequest = request({
+            hostname: `${process.env.DATABASE_SERVER_ENDPOINT}`,
+            port: process.env.DATABASE_SERVER_PORT,
+            path: `/tasks?${queryParameters.toString()}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+    getRequest.on('response', (response) => {
+        let tasks = '';
+        response.on('data', (chunk) => {
+            tasks += chunk;
+        });
+        response.on('end', () => {
+            try{
+                let temptask = JSON.parse(tasks);
+                if(typeof temptask == 'object' && temptask instanceof Array){
+                    if (searchString) {
+                        const query = searchString.toLowerCase();
+                        temptask = temptask.filter(t =>
+                            (t.title && t.title.toLowerCase().includes(query)) ||
+                            (t.description && t.description.toLowerCase().includes(query))
+                        );
+                    }
+                }
+                res.json(temptask);
+            }catch(err){
+                console.log(err);
+                res.status(500).send(tasks);
+            }
+        });
+    });
+
+    getRequest.on('error', (error) => {
+        console.error(error);
+        res.status(500).send({status:'error',message:error.message});
+    });
+
+    getRequest.end();
 });
+
 
 app.put('/tasks/:id', (req, res) => {
-    const index = tasks.findIndex(t => t.id === req.params.id);
-    if (index !== -1) {
-        tasks[index] = { ...tasks[index], ...req.body };
-        res.json(tasks[index]);
-    } else {
-        res.status(404).send();
-    }
+    const id = req.params.id;
+    const requestJSONstring = JSON.stringify(req.body);
+    
+    let putRequest = http.request({
+        hostname: `${process.env.DATABASE_SERVER_ENDPOINT}`,
+        port: process.env.DATABASE_SERVER_PORT,
+        path: `/tasks/${id}`,
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': requestJSONstring.length
+        },
+    }, (response) => {
+        let data = '';
+        response.on('data', (chunk) => {
+            data += chunk;
+        });
+        response.on('end', () => {
+            try {
+                const result = JSON.parse(data);
+                res.json(result);
+            } catch (err) {
+                console.log(err);
+                res.status(500).send(data);
+            }
+        });
+    });
+
+    putRequest.on('error', (error) => {
+        console.error(error);
+        res.status(500).send({ status: 'error', message: error.message });
+    });
+
+    putRequest.write(requestJSONstring);
+    putRequest.end();
 });
 
-app.patch('/tasks/:id', (req, res) => {
-    const index = tasks.findIndex(t => t.id === req.params.id);
-    if (index !== -1) {
-        tasks[index] = { ...tasks[index], ...req.body };
-        res.json(tasks[index]);
-    } else {
-        res.status(404).send();
-    }
-});
 
 app.delete('/tasks/:id', (req, res) => {
-    const index = tasks.findIndex(t => t.id === req.params.id);
-    if (index !== -1) {
-        tasks.splice(index, 1);
-        res.status(204).send();
-    } else {
-        res.status(404).send();
-    }
+    const id = req.params.id;
+    
+    let deleteRequest = http.request({
+        hostname: `${process.env.DATABASE_SERVER_ENDPOINT}`,
+        port: process.env.DATABASE_SERVER_PORT,
+        path: `/tasks/${id}`,
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    }, (response) => {
+        let data = '';
+        response.on('data', (chunk) => {
+            data += chunk;
+        });
+        response.on('end', () => {
+            try {
+                const result = JSON.parse(data);
+                res.status(200).json(result);
+            } catch (err) {
+                console.log(err);
+                res.status(500).send(data);
+            }
+        });
+    });
+
+    deleteRequest.on('error', (error) => {
+        console.error(error);
+        res.status(500).send({ status: 'error', message: error.message });
+    });
+
+    deleteRequest.end();
 });
 
 app.listen(port, () => {
