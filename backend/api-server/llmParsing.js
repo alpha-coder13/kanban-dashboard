@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({path: path.join(import.meta.dirname,'.env')});
 const groqLLMObject = new Groq({apiKey:process.env.GROQ_API_KEY});
-// const groqLLMObject = new Groq({apiKey:"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"});
+
 
 
 export const LLMRequests  = async(message="") =>{
